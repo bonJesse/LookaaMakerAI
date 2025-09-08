@@ -1,5 +1,7 @@
 {
-  "name": "Lookaa Makeover AI",
+  "name": "一起环游世界",
   "description": "Upload a portrait, choose any country, and watch as AI transforms your image with authentic local clothing, hairstyles, and iconic backgrounds. A fun way to explore global cultures through your own photo.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera"
+  ]
 }

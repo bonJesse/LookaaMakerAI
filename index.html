@@ -12,14 +12,43 @@
     <style>
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #f7f3ed; /* Light, warm beige background */
+        background-color: #4F3A9D;
+        background-image: linear-gradient(135deg, #6B73FF 0%, #4F3A9D 100%);
+        color: white;
+        overflow-x: hidden;
+        position: relative;
+      }
+      body::before, body::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        z-index: -1;
+        filter: blur(150px);
+        opacity: 0.7;
+      }
+      body::before {
+        top: -10%;
+        left: -15%;
+        width: 40vw;
+        height: 40vw;
+        max-width: 500px;
+        max-height: 500px;
+        background: rgba(126, 101, 229, 0.5);
+      }
+      body::after {
+        bottom: -15%;
+        right: -15%;
+        width: 50vw;
+        height: 50vw;
+        max-width: 600px;
+        max-height: 600px;
+        background: rgba(239, 132, 87, 0.4);
       }
       .continent-button {
         transition: all 0.3s ease-in-out;
       }
       .continent-button:hover {
-        transform: scale(1.1);
-        z-index: 10;
+        transform: scale(1.05);
       }
       .animate-fade-in {
         animation: fadeIn 0.5s ease-in-out;
@@ -40,7 +69,7 @@
 }
 </script>
 </head>
-  <body class="text-stone-800">
+  <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

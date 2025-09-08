@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Header } from './components/Header';
 import { ImageUploader } from './components/ImageUploader';
 import { CountrySelector } from './components/CountrySelector';
@@ -7,6 +7,32 @@ import { LoadingSpinner } from './components/LoadingSpinner';
 import { analyzeImage, transformImage } from './services/geminiService';
 import type { ImageValidationResult } from './types';
 import { AppState } from './types';
+
+const HotDestinations = ({ onSelect, selected }: { onSelect: (country: string) => void; selected: string }) => {
+  const hotSpots = [
+    { name: '日本和服', flag: '🇯🇵', country: 'Japan' },
+    { name: '印度纱丽', flag: '🇮🇳', country: 'India' },
+    { name: '苏格兰裙', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', country: 'Scotland' },
+    { name: '埃及法老', flag: '🇪🇬', country: 'Egypt' },
+    { name: '墨西哥传统', flag: '🇲🇽', country: 'Mexico' },
+    { name: '中国汉服', flag: '🇨🇳', country: 'China' },
+  ];
+
+  return (
+    <div className="flex flex-wrap justify-center gap-4 mt-4">
+      {hotSpots.map((spot) => (
+        <button
+          key={spot.country}
+          onClick={() => onSelect(spot.country)}
+          className={`px-6 py-3 rounded-xl transition-all duration-300 text-stone-800 flex items-center gap-3 text-lg font-medium shadow-md hover:shadow-lg hover:scale-105 ${selected === spot.country ? 'bg-orange-400 ring-2 ring-orange-200' : 'bg-white/80 hover:bg-white'}`}
+        >
+          <span>{spot.flag}</span>
+          <span>{spot.name}</span>
+        </button>
+      ))}
+    </div>
+  );
+};
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.UPLOADING);
@@ -36,11 +62,11 @@ const App: React.FC = () => {
           setAppState(AppState.SELECTING);
         } else {
           setAppState(AppState.UPLOADING);
-          setImageBase64(null); // Clear image if invalid
+          setImageBase64(null);
         }
       } catch (error) {
         console.error("Image validation failed:", error);
-        setApiError("Sorry, we couldn't analyze the image. Please try again.");
+        setApiError("抱歉，我们无法分析您的图片。请再试一次。");
         setAppState(AppState.UPLOADING);
         setImageBase64(null);
       }
@@ -60,7 +86,7 @@ const App: React.FC = () => {
       setAppState(AppState.RESULT);
     } catch (error) {
       console.error("Image transformation failed:", error);
-      setApiError("The makeover failed. Please try a different image or country.");
+      setApiError("魔法变装失败了。请换一张图片或国家试试。");
       setAppState(AppState.SELECTING);
     }
   }, [imageBase64, selectedCountry, originalMimeType]);
@@ -87,6 +113,14 @@ const App: React.FC = () => {
   };
 
   const renderLeftPanel = () => {
+    if (appState === AppState.RESULT) {
+       return <ResultDisplay 
+                  generatedImage={generatedImage} 
+                  onRegenerate={handleRegenerate} 
+                  onNewDestination={handleNewDestination}
+                  onNewPhoto={handleFullReset}
+                />;
+    }
     if (!imageBase64 || appState === AppState.UPLOADING) {
       return (
         <ImageUploader 
@@ -98,63 +132,72 @@ const App: React.FC = () => {
       );
     }
     return (
-      <div className="p-6 bg-white/70 rounded-xl h-full flex flex-col justify-center items-center backdrop-blur-sm border border-stone-200/80 shadow-sm">
-        <h2 className="text-2xl font-bold text-stone-800 mb-4 text-center">Your Portrait</h2>
+      <div className="p-6 h-full flex flex-col justify-center items-center">
+        <h2 className="text-2xl font-bold text-stone-800 mb-4 text-center">🖼️ 你的照片</h2>
         <img src={`data:${originalMimeType};base64,${imageBase64}`} alt="Uploaded Portrait" className="rounded-xl shadow-lg object-contain max-h-[400px] w-full" />
         <button 
           onClick={handleFullReset}
           className="mt-4 text-sm text-orange-600 hover:text-orange-500 transition-colors"
         >
-          Upload a new photo
+          上传一张新照片
         </button>
       </div>
     );
   };
   
   const renderRightPanel = () => {
-    switch (appState) {
-      case AppState.TRANSFORMING:
-        return <div className="h-full flex items-center justify-center"><LoadingSpinner /></div>;
-      case AppState.RESULT:
-        return <ResultDisplay 
-                  generatedImage={generatedImage} 
-                  onRegenerate={handleRegenerate} 
-                  onNewDestination={handleNewDestination}
-                />;
-      default:
-        return <CountrySelector onCountrySelect={setSelectedCountry} selectedCountry={selectedCountry} />;
+    if (appState === AppState.TRANSFORMING || appState === AppState.RESULT) {
+       return <div className="p-6 h-full flex flex-col justify-center items-center">
+         <h2 className="text-2xl font-bold text-stone-800 mb-4 text-center">🗺️ 你的原图</h2>
+         <img src={`data:${originalMimeType};base64,${imageBase64}`} alt="Uploaded Portrait" className="rounded-xl shadow-lg object-contain max-h-[400px] w-full" />
+       </div>;
     }
+    return <CountrySelector onCountrySelect={setSelectedCountry} selectedCountry={selectedCountry} />;
   };
+
+  const activeStep = useMemo(() => {
+    if (appState === AppState.RESULT || appState === AppState.TRANSFORMING) return 3;
+    if (imageBase64 && validationResult?.isValid) return 2;
+    return 1;
+  }, [appState, imageBase64, validationResult]);
+
+  const showTransformButton = appState === AppState.SELECTING || appState === AppState.TRANSFORMING;
+  const showHotDestinations = appState === AppState.SELECTING || appState === AppState.UPLOADING || appState === AppState.VALIDATING;
 
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8 flex flex-col">
       <div className="container mx-auto">
-        <Header />
-        <main className="mt-8 flex-grow">
-          <div className="grid grid-cols-1 lg:grid-cols-11 gap-6 lg:gap-8 items-stretch h-full">
-            <div className="lg:col-span-5 h-full">
-              {renderLeftPanel()}
+        <Header activeStep={activeStep} />
+        <main className="mt-8 flex-grow flex flex-col items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-7xl">
+            <div className="bg-white/90 text-stone-800 rounded-2xl p-2 sm:p-4 shadow-lg backdrop-blur-sm">
+              {appState === AppState.TRANSFORMING ? <LoadingSpinner /> : renderLeftPanel()}
             </div>
             
-            <div className="lg:col-span-1 flex items-center justify-center my-4 lg:my-0">
-                {(appState === AppState.SELECTING || appState === AppState.TRANSFORMING) && (
-                    <button
-                        onClick={handleTransform}
-                        disabled={!selectedCountry || appState === AppState.TRANSFORMING}
-                        className="p-4 rounded-full bg-orange-600 text-white shadow-lg hover:bg-orange-700 disabled:bg-stone-300 disabled:text-stone-500 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110"
-                        aria-label="Transform Image"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                    </button>
-                )}
-            </div>
-
-            <div className="lg:col-span-5 h-full">
+            <div className="bg-white/90 text-stone-800 rounded-2xl p-2 sm:p-4 shadow-lg backdrop-blur-sm">
               {renderRightPanel()}
             </div>
           </div>
+          
+          {showTransformButton && (
+            <div className="my-8 text-center animate-fade-in">
+              <button
+                onClick={handleTransform}
+                disabled={!selectedCountry || !imageBase64 || appState === AppState.TRANSFORMING}
+                className="px-10 py-5 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xl font-bold shadow-lg hover:shadow-xl disabled:from-stone-400 disabled:to-stone-500 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110"
+              >
+                ✨ 开始魔法变装
+              </button>
+            </div>
+          )}
+
+          {showHotDestinations && (
+            <div className="w-full max-w-5xl mt-8 text-center animate-fade-in">
+              <h3 className="text-2xl font-bold text-white/90">🔥 热门目的地</h3>
+              <HotDestinations onSelect={setSelectedCountry} selected={selectedCountry} />
+            </div>
+          )}
+
         </main>
       </div>
     </div>

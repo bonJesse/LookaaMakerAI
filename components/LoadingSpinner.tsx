@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
 const messages = [
-  "Crafting your new look...",
-  "Adding cultural flair...",
-  "Painting the perfect background...",
-  "Consulting with digital stylists...",
-  "This masterpiece takes a moment...",
+  "正在为您打造新造型...",
+  "添加异域文化风情...",
+  "绘制完美的背景...",
+  "与数字造型师沟通中...",
+  "杰作需要一点时间...",
+  "AI正在施展魔法...",
 ];
 
 export const LoadingSpinner: React.FC = () => {
@@ -24,10 +25,10 @@ export const LoadingSpinner: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center text-center p-6 bg-white/70 rounded-xl border border-stone-200/80 shadow-sm">
-      <div className="w-12 h-12 border-4 border-t-orange-500 border-r-orange-500 border-b-orange-500 border-l-stone-200 rounded-full animate-spin"></div>
-      <p className="mt-4 text-lg font-semibold text-stone-700">{message}</p>
-      <p className="text-sm text-stone-500">Please wait, AI is working its magic.</p>
+    <div className="flex flex-col items-center justify-center text-center p-6 h-full">
+      <div className="w-16 h-16 border-4 border-t-orange-500 border-r-orange-500 border-b-orange-500 border-l-stone-200 rounded-full animate-spin"></div>
+      <p className="mt-6 text-xl font-semibold text-stone-700">{message}</p>
+      <p className="text-md text-stone-500 mt-2">请稍候，魔法正在发生。</p>
     </div>
   );
 };

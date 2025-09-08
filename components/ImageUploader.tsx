@@ -8,11 +8,13 @@ interface ImageUploaderProps {
   apiError: string | null;
 }
 
-const UploadIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+const CameraIcon = () => (
+    <svg xmlns="http://www.w.org/2000/svg" className="h-16 w-16 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
 );
+
 
 const CheckIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-600" viewBox="0 0 20 20" fill="currentColor">
@@ -54,7 +56,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, val
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFile(e.dataTransfer.files);
     }
-  }, []);
+  }, [handleFile]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -62,43 +64,62 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, val
       handleFile(e.target.files);
     }
   };
+  
+  const onSelectFileClick = () => {
+    if (inputRef.current) {
+        inputRef.current.removeAttribute('capture');
+        inputRef.current.click();
+    }
+  };
 
-  const onButtonClick = () => {
-    inputRef.current?.click();
+  const onTakePhotoClick = () => {
+    if (inputRef.current) {
+        inputRef.current.setAttribute('capture', 'user');
+        inputRef.current.click();
+    }
   };
 
   const hasValidationMessage = validationResult || apiError;
 
   return (
-    <div className="w-full h-full flex flex-col justify-center items-center">
-        <form 
-            className={`p-8 border-2 border-dashed rounded-xl w-full text-center transition-colors duration-300 ${dragActive ? 'border-orange-500 bg-orange-50' : 'border-stone-300 bg-stone-50 hover:border-stone-400'}`}
+    <div className="w-full h-full flex flex-col justify-center items-center p-4">
+        <h2 className="text-2xl font-bold text-stone-800 mb-4">🖼️ 你的照片</h2>
+        <div 
+            className={`p-8 border-2 border-dashed rounded-xl w-full text-center transition-colors duration-300 ${dragActive ? 'border-orange-500 bg-orange-50' : 'border-stone-300 bg-stone-50/50'}`}
             onDragEnter={handleDrag} 
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
             onDrop={handleDrop}
-            onSubmit={(e) => e.preventDefault()}
         >
             <input
                 ref={inputRef}
                 type="file"
                 className="hidden"
-                accept="image/png, image/jpeg, image/webp"
+                accept="image/png, image/jpeg"
                 onChange={handleChange}
             />
-            <div className="flex flex-col items-center justify-center space-y-4">
-                <UploadIcon />
-                <p className="text-stone-500">
-                    <button type="button" onClick={onButtonClick} className="font-semibold text-orange-600 hover:text-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-stone-50 focus:ring-orange-500 rounded">
-                        Click to upload
-                    </button>
-                    {' '} or drag and drop
-                </p>
-                <p className="text-xs text-stone-400">PNG, JPG, or WEBP (5MB max)</p>
+            <div className="flex flex-col items-center justify-center space-y-2">
+                <CameraIcon />
+                <p className="text-lg font-semibold text-stone-600">点击上传照片</p>
+                <p className="text-sm text-stone-500">支持 JPG, PNG 格式，最大 10MB</p>
             </div>
-        </form>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 w-full mt-4">
+            <button type="button" onClick={onSelectFileClick} className="w-full py-3 px-4 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 transition-all duration-300 transform hover:scale-105">
+                选择文件
+            </button>
+            <button type="button" onClick={onTakePhotoClick} className="w-full py-3 px-4 bg-white text-stone-700 font-semibold rounded-lg border border-stone-300 shadow-sm hover:bg-stone-100 transition-colors duration-300">
+                拍照
+            </button>
+        </div>
+
+        <div className="mt-4 text-sm text-stone-500 bg-stone-100 py-2 px-4 rounded-lg">
+            💡 提示: 选择清晰的正面照片效果更佳
+        </div>
+
          {isLoading && (
-            <div className="mt-4 text-center text-stone-600">Analyzing your photo...</div>
+            <div className="mt-4 text-center text-stone-600">正在分析您的照片...</div>
         )}
         {hasValidationMessage && !isLoading && (
           <div className={`mt-4 p-3 rounded-lg flex items-center text-sm ${validationResult?.isValid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
